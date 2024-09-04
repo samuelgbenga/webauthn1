@@ -125,12 +125,13 @@ const App = () => {
       //step 1 get the server challenge
       const response = await loginStart(username);
 
-      const data = await response;
       //const data = await response;
+      const data = await response;
 
       //console.log(data);
       const publicKey = data.key; // This is the challenge data
 
+      console.log(data);
       //step 2 send the challenge to the plateform Authenticator
       const assertionOptions = {
         challenge: Uint8Array.from(
@@ -148,15 +149,29 @@ const App = () => {
           ),
         })),
         timeout: 60000,
-        userVerification: "preferred",
+        userVerification: publicKey.publicKey.userVerification,
+        userHandle: data.handle ? Uint8Array.from(atob(data.handle.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)) : undefined,
       };
 
+
+      const something1 = Uint8Array.from(atob(data.handle.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+      const something2 = base64UrlEncode(
+        new Uint8Array(something1)
+      );
+
+      console.log("something2: ", something2)
+
+      console.log(assertionOptions);
       //step 3 get the challenge from the authenticator device second
       const credential = await navigator.credentials.get({
         publicKey: assertionOptions,
       });
 
-      // step 4 structure the credential in a acceptable
+      //data.handle = atob(data.handle.replace(/-/g, "+").replace(/_/g, "/"));
+
+      console.log("from authenticator: ",credential);
+
+      // Step 4: Structure the credential in an acceptable format
       const credentialResponse = {
         id: credential.id,
         response: {
@@ -169,16 +184,15 @@ const App = () => {
           signature: base64UrlEncode(
             new Uint8Array(credential.response.signature)
           ),
-          userHandle: base64UrlEncode(new Uint8Array(credential.id)),
-          // userHandle: credential.response.userHandle
-          //   ? base64UrlEncode(new Uint8Array(credential.response.userHandle))
-          //   : null, // Handle null or undefined cases
+          userHandle: credential.response.userHandle
+            ? base64UrlEncode(new Uint8Array(credential.response.userHandle))
+            : base64UrlEncode(new Uint8Array(data.handle)),
         },
-
         clientExtensionResults: credential.getClientExtensionResults(),
         type: credential.type,
       };
 
+      console.log(credentialResponse);
       const jsonString = JSON.stringify(credentialResponse);
       // console.log(jsonString);
 

@@ -108,7 +108,7 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
 
            PublicKeyCredentialCreationOptions requestOptions =  getPkcFromCache(username);
 
-           System.out.println(credential);
+           //System.out.println(credential);
 
            if (requestOptions != null){
                PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> pkc = PublicKeyCredential.parseRegistrationResponseJson(credential);
@@ -189,16 +189,27 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
     public AuthVerifyResponseDTO startLogin(String userName) {
         AssertionRequest request = relyingParty.startAssertion(StartAssertionOptions.builder().username(userName).build());
 
+        AuthUser user = authUserRepo.findByUserName(userName);
+        Authenticator userAuth = authenticatorRepository.findByName(userName).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+
+        System.out.println(userAuth.getCredentialId());
+        System.out.println(user.getHandle());
+
         try{
             addRequestToCache(userName, request);
             return AuthVerifyResponseDTO.builder()
                     .userName(userName)
                     .key(mapper.readTree(request.toCredentialsGetJson()))
+                    .handle(user.getHandle())
                     .build();
         } catch (JsonProcessingException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
+
     }
+
+
     private void addRequestToCache(String userName, AssertionRequest request) {
         Objects.requireNonNull(cacheManager.getCache("pkc-verify")).put(userName, request);
     }
@@ -217,7 +228,7 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
                     .response(pkc)
                     .build();
 
-            System.out.println(finishAssertionOptions);
+            //System.out.println(finishAssertionOptions);
 
             AssertionResult result = relyingParty.finishAssertion(
                     finishAssertionOptions
