@@ -23,4 +23,11 @@ public class ByteArrayAttributeConverter implements AttributeConverter<ByteArray
     public ByteArray convertToEntityAttribute(String s) {
         return s == null ? null : new ByteArray(Base64.getDecoder().decode(s));
     }
+
+
+//    public static void main(String[] args) {
+//        ByteArray s = new ByteArray(Base64.getDecoder().decode("MM/Vc1zvbPg61qBCUv6s35h7nzIU0fU287jf0EbToGY="));
+//
+//        System.out.println(s);
+//    }
 }

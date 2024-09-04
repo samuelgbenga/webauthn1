@@ -106,7 +106,7 @@ const App = () => {
       //console.log(jsonString)
 
       // step 5 send the challenge or credential back to the server
-      const autResponse = await registerFinish(username, credentialResponse);
+      const autResponse = await registerFinish(username, jsonString);
 
       console.log(autResponse);
       setMessage("Registration successful");
@@ -150,26 +150,19 @@ const App = () => {
         })),
         timeout: 60000,
         userVerification: publicKey.publicKey.userVerification,
-        userHandle: data.handle ? Uint8Array.from(atob(data.handle.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)) : undefined,
       };
 
-
-      const something1 = Uint8Array.from(atob(data.handle.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
-      const something2 = base64UrlEncode(
-        new Uint8Array(something1)
-      );
-
-      console.log("something2: ", something2)
-
-      console.log(assertionOptions);
+      // console.log(assertionOptions);
       //step 3 get the challenge from the authenticator device second
       const credential = await navigator.credentials.get({
         publicKey: assertionOptions,
       });
 
       //data.handle = atob(data.handle.replace(/-/g, "+").replace(/_/g, "/"));
+      let str = data.handle;
+      let str1 = str.replace(/-/g, "+").replace(/_/g, "/").replace(/=+$/, "");
 
-      console.log("from authenticator: ",credential);
+      console.log("from authenticator: ", str1);
 
       // Step 4: Structure the credential in an acceptable format
       const credentialResponse = {
@@ -186,18 +179,17 @@ const App = () => {
           ),
           userHandle: credential.response.userHandle
             ? base64UrlEncode(new Uint8Array(credential.response.userHandle))
-            : base64UrlEncode(new Uint8Array(data.handle)),
+            : base64UrlEncode(
+                Uint8Array.from(atob(str1), (c) => c.charCodeAt(0))
+              ),
         },
         clientExtensionResults: credential.getClientExtensionResults(),
         type: credential.type,
       };
 
-      console.log(credentialResponse);
-      const jsonString = JSON.stringify(credentialResponse);
-      // console.log(jsonString);
-
+    
       // step 5 send the challenge or credential back to the server
-      const result = await loginFinish(username, jsonString);
+      const result = await loginFinish(username, credentialResponse);
 
       // sixt division
       if (result.ok) {
@@ -208,7 +200,7 @@ const App = () => {
         console.log("Login Failed");
       }
     } catch (error) {
-      console.error("Login failed:", error);
+      console.log("Login failed:", error);
       setMessage("Login failed");
     }
   };

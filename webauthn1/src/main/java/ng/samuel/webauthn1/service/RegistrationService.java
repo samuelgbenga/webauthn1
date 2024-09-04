@@ -11,7 +11,9 @@ import ng.samuel.webauthn1.repository.AuthSupportRepository;
 import ng.samuel.webauthn1.repository.AuthUserRepo;
 import ng.samuel.webauthn1.repository.AuthenticatorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -59,19 +61,25 @@ public class RegistrationService implements CredentialRepository {
         AuthSupport authSupport = authSupportRepository.findByCredId(credentialId.getBase64Url());
         Optional<Authenticator> auth = authenticatorRepository.findByName(authSupport.getUserName());
 
-        if(auth.isPresent()){
-            Authenticator credential = auth.get();
-            RegisteredCredential registeredCredential = RegisteredCredential.builder()
-                    .credentialId(credential.getCredentialId())
-                    .userHandle(credential.getUser().getHandle())
-                    .publicKeyCose(credential.getPublicKey())
-                    .signatureCount(credential.getCount())
-                    .build();
+        try {
+            if(auth.isPresent()){
+                Authenticator credential = auth.get();
+                RegisteredCredential registeredCredential = RegisteredCredential.builder()
+                        .credentialId(credential.getCredentialId())
+                        .userHandle(credential.getUser().getHandle())
+                        //.userHandle(credential.getCredentialId())
+                        .publicKeyCose(credential.getPublicKey())
+                        .signatureCount(credential.getCount())
+                        .build();
 
-            return Optional.of(registeredCredential);
-        }
-        else {
-            return Optional.empty();
+                return Optional.of(registeredCredential);
+            }
+            else {
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 

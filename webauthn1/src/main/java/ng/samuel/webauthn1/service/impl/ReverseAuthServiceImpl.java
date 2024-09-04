@@ -117,7 +117,7 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
                        .response(pkc)
                        .build();
 
-               System.out.println(options);
+               //System.out.println(options);
 
                RegistrationResult result = relyingParty.finishRegistration(options);
                Authenticator savedAuth = new Authenticator(result, pkc.getResponse(), authUser, username);
@@ -188,13 +188,7 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
     @Override
     public AuthVerifyResponseDTO startLogin(String userName) {
         AssertionRequest request = relyingParty.startAssertion(StartAssertionOptions.builder().username(userName).build());
-
         AuthUser user = authUserRepo.findByUserName(userName);
-        Authenticator userAuth = authenticatorRepository.findByName(userName).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-
-        System.out.println(userAuth.getCredentialId());
-        System.out.println(user.getHandle());
 
         try{
             addRequestToCache(userName, request);
@@ -228,7 +222,14 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
                     .response(pkc)
                     .build();
 
-            //System.out.println(finishAssertionOptions);
+            AuthUser user = authUserRepo.findByUserName(userName);
+            System.out.println("user handler byteArray: "+user.getHandle());
+            System.out.println("*******************************************************");
+            System.out.println(request);
+            System.out.println("*******************************************************");
+            System.out.println(pkc);
+            System.out.println("*******************************************************");
+
 
             AssertionResult result = relyingParty.finishAssertion(
                     finishAssertionOptions
