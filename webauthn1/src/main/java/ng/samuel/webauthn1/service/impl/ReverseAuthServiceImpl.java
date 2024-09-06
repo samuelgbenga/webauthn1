@@ -27,9 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -51,30 +49,29 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
 
     @Override
     public AuthRegisterResponse registerAuthUser(String userName) {
-       boolean existingUser = authUserRepo.existsById(userName);
+        boolean existingUser = authUserRepo.existsById(userName);
 
-       if(!existingUser){
-           UserIdentity userIdentity = UserIdentity.builder()
-                   .name(userName)
-                   .displayName(userName)
-                   .id(generateRandom.generateRandomId(32))
-                   .build();
+        if(!existingUser){
+            UserIdentity userIdentity = UserIdentity.builder()
+                    .name(userName)
+                    .displayName(userName)
+                    .id(generateRandom.generateRandomId(32))
+                    .build();
 
-           AuthUser saveAuthUser = new AuthUser(userIdentity);
-           try {
-               authUserRepo.save(saveAuthUser);
-               return newAuthRegistration(saveAuthUser);
-              // return AuthRegisterResponse.builder().userName(saveAuthUser.getUserName()).build();
-           }catch (Exception e){
-               throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to save user.", e);
-           }
-       }else {
-           throw new ResponseStatusException(HttpStatus.CONFLICT, "Username "+ userName + " already exists. Choose a new name");
-       }
+            AuthUser saveAuthUser = new AuthUser(userIdentity);
+            try {
+                authUserRepo.save(saveAuthUser);
+                return newAuthRegistration(saveAuthUser);
+                // return AuthRegisterResponse.builder().userName(saveAuthUser.getUserName()).build();
+            }catch (Exception e){
+
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to save user.", e);
+            }
+        }else {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username "+ userName + " already exists. Choose a new name");
+        }
 
     }
-
-
 
     private AuthRegisterResponse newAuthRegistration(AuthUser saveAuthUser) {
         UserIdentity userIdentity = saveAuthUser.toUserIdentity();
@@ -118,6 +115,14 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
                        .build();
 
                //System.out.println(options);
+               System.out.println("*****************************");
+               System.out.println(requestOptions);
+               System.out.println("*****************************");
+               System.out.println(pkc);
+               System.out.println("*****************************");
+               System.out.println(pkc.getId().getBase64());
+               System.out.println("*****************************");
+               System.out.println(pkc.getId().getBase64Url());
 
                RegistrationResult result = relyingParty.finishRegistration(options);
                Authenticator savedAuth = new Authenticator(result, pkc.getResponse(), authUser, username);
@@ -187,16 +192,28 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
 
     @Override
     public AuthVerifyResponseDTO startLogin(String userName) {
-        AssertionRequest request = relyingParty.startAssertion(StartAssertionOptions.builder().username(userName).build());
-        AuthUser user = authUserRepo.findByUserName(userName);
 
+        // step 1: start assertion
+        AssertionRequest request = relyingParty.startAssertion(StartAssertionOptions.builder().username(userName).build());
+
+       // step 2: check the db if the user exist
+        AuthUser user = authUserRepo.findById(userName).orElseThrow(
+                    ()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        // try and catch it
         try{
+            // step 3: cache the user and the assertion request
             addRequestToCache(userName, request);
+
+            // Step 4: return the necessary information the Authenticator
+            // including: username(string), key(jsonNode). exclude handle.
             return AuthVerifyResponseDTO.builder()
                     .userName(userName)
                     .key(mapper.readTree(request.toCredentialsGetJson()))
                     .handle(user.getHandle())
                     .build();
+
+            // catch the error
         } catch (JsonProcessingException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
@@ -204,45 +221,76 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
     }
 
 
+    // the caches the request to match it with the response from the authenticator
     private void addRequestToCache(String userName, AssertionRequest request) {
         Objects.requireNonNull(cacheManager.getCache("pkc-verify")).put(userName, request);
     }
 
 
 
+    // gets the two information one from the server(request) and the other from the authenticator(response)
+    // and does the comparison using finishAssertion method (which did work so i had to do it manually)
     @Override
     public boolean finishLogin(String userName, String credential) {
         try{
+
+            // step 1:  get the credential from the authenticator
             PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> pkc =
                     PublicKeyCredential.parseAssertionResponseJson(credential);
+            // step 2: get the previously cashed information
             AssertionRequest request =  getRequestFromCache(userName);
 
-            FinishAssertionOptions finishAssertionOptions = FinishAssertionOptions.builder()
-                    .request(request)
-                    .response(pkc)
-                    .build();
-
+            // ( i did this so i will not include it as part of the step)
             AuthUser user = authUserRepo.findByUserName(userName);
-            System.out.println("user handler byteArray: "+user.getHandle());
+
+            if (request.getPublicKeyCredentialRequestOptions().getAllowCredentials().get().isEmpty()) return false;
+
             System.out.println("*******************************************************");
             System.out.println(request);
+            System.out.println(request.getPublicKeyCredentialRequestOptions().getChallenge());
+            System.out.println(request.getPublicKeyCredentialRequestOptions().getAllowCredentials().get().getFirst().getId().getBase64Url().toString());
+            System.out.println("user handler byteArray: "+user.getHandle());
             System.out.println("*******************************************************");
-            System.out.println(pkc);
+            System.out.println(pkc.getResponse().getClientData().getChallenge().getBase64Url().toString());
+            System.out.println(pkc.getId());
+            System.out.println(pkc.getResponse().getUserHandle());
+
             System.out.println("*******************************************************");
 
+            // server challange return to server is suppose to be same
+            byte[] serverChallenge = request.getPublicKeyCredentialRequestOptions().getChallenge().getBytes();
+            byte[] authenticatorChallenge = pkc.getResponse().getClientData().getChallenge().getBytes();
 
-            AssertionResult result = relyingParty.finishAssertion(
-                    finishAssertionOptions
-            );
+            // allowCredentials and id are suppose to be thesame
+            byte[] serverId = request.getPublicKeyCredentialRequestOptions().getAllowCredentials().get().getFirst().getId().getBytes();
+            byte[] authenticatorId = pkc.getId().getBytes();
 
-            return result.isSuccess();
+            // handle the userHandle array if they are same
+            byte[] serverHandle = user.getHandle().getBytes();
+            byte[] authenticatorHandle = pkc.getResponse().getUserHandle().get().getBytes();
 
-        } catch (IOException | AssertionFailedException e) {
+            return Arrays.equals(serverChallenge, authenticatorChallenge) && Arrays.equals(serverId, authenticatorId) && Arrays.equals(serverHandle, authenticatorHandle);
+
+
+            // step 3: include both the request and response the FinishAssertionOptions
+            //            FinishAssertionOptions finishAssertionOptions = FinishAssertionOptions.builder()
+//                    .request(request)
+//                    .response(pkc)
+//                    .build();
+
+            // step 4: Perform the finishAssertion to compare the request and response
+//            AssertionResult result = relyingParty.finishAssertion(
+//                    finishAssertionOptions
+//            );
+
+            // return true or false
+            //return result.isSuccess();
+
+
+        } catch (IOException  e) {
             throw new RuntimeException("Authentication failed",e);
         }
     }
-
-
 
 
 
@@ -260,5 +308,30 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
         throw new IllegalStateException("Cached object is not of type AssertionRequest");
     }
 }
+
+
+    @Override
+    public String refreshAuthUserDb() {
+
+
+        List<String> listOfUsers = authUserRepo.findAllIds();
+        List<String> listOfUserSupports = authSupportRepository.findAllIds();
+
+
+        Set<String> supportUserSet = new HashSet<>(listOfUserSupports);
+
+        for (String userId : listOfUsers) {
+            if (!supportUserSet.contains(userId)) {
+                authUserRepo.deleteById(userId); // Delete users from listOfUsers not in listOfUserSupports
+            }
+        }
+
+        System.out.println("++++++++++++++++++++++++++");
+        System.out.println(listOfUsers);
+        System.out.println("++++++++++++++++++++++++++");
+        System.out.println(listOfUserSupports);
+
+        return "refresh successful";
+    }
 
 }

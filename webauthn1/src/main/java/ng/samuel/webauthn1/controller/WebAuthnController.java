@@ -40,6 +40,13 @@ public class WebAuthnController {
         return ResponseEntity.ok(success);
     }
 
+    @GetMapping("/refresh-table")
+    public ResponseEntity<?> refreshAuthTable(){
+        String response = reverseAuthService.refreshAuthUserDb();
+
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/testing")
     public ResponseEntity<String> testing()
     {

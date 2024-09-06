@@ -3,6 +3,7 @@ import { getTesting } from "./api/getTesting";
 import { registerFinish, registerStart } from "./api/registrationStart";
 import { loginFinish, loginStart } from "./api/loginStart";
 import QRCode from "qrcode";
+import { refresh } from "./api/refresh";
 
 const App = () => {
   const [resp, setResp] = useState({});
@@ -36,6 +37,23 @@ const App = () => {
     // setShow(!show);
   };
 
+
+  const handleRefresh = async () => {
+    setIsLoading(true);
+    try {
+      const response = await refresh();
+
+      setResp(response);
+    } catch (error) {
+      console.log("this error", error);
+      setErrorMessage("An error occur");
+    } finally {
+      setIsLoading(false);
+    }
+
+    // setShow(!show);
+  };
+
   // TEst registration code
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -49,6 +67,7 @@ const App = () => {
       const data = await response;
 
       const publicKey = data.key; // This is the challenge data
+
 
       //step 2 send the challenge to the plateform Authenticator
       const credentialCreationOptions = {
@@ -78,15 +97,17 @@ const App = () => {
         attestation: "direct",
       };
 
+
       //step 3 get the challenge from the authenticator device second
       const credential = await navigator.credentials.create({
         publicKey: credentialCreationOptions,
       });
 
+
       // step 4 structure the credential in a acceptable
       //formate that would be sent to the server
       const credentialResponse = {
-        id: credential.id.replace(/_/g, "/").replace(/-/g, "+"),
+        id: credential.id,
         //rawId: Array.from(new Uint8Array(credential.rawId)),
         //rawId:  base64UrlEncode(new Uint8Array(credential.rawId)),
         response: {
@@ -108,13 +129,18 @@ const App = () => {
       // step 5 send the challenge or credential back to the server
       const autResponse = await registerFinish(username, jsonString);
 
-      console.log(autResponse);
+     console.log(autResponse);
       setMessage("Registration successful");
     } catch (error) {
       console.log("Registration failed:", error);
       setMessage("Registration failed");
     }
   };
+
+
+
+
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -131,7 +157,7 @@ const App = () => {
       //console.log(data);
       const publicKey = data.key; // This is the challenge data
 
-      console.log(data);
+      console.log(publicKey.publicKey.allowCredentials[0].id);
       //step 2 send the challenge to the plateform Authenticator
       const assertionOptions = {
         challenge: Uint8Array.from(
@@ -157,6 +183,7 @@ const App = () => {
       const credential = await navigator.credentials.get({
         publicKey: assertionOptions,
       });
+
 
       //data.handle = atob(data.handle.replace(/-/g, "+").replace(/_/g, "/"));
       let str = data.handle;
@@ -192,7 +219,7 @@ const App = () => {
       const result = await loginFinish(username, credentialResponse);
 
       // sixt division
-      if (result.ok) {
+      if (result) {
         setMessage("Login successful");
         console.log("login successful");
       } else {
@@ -212,6 +239,13 @@ const App = () => {
   return (
     <div>
       <button onClick={handleGetMe}>Get me button</button>
+      <div>{resp && <pre>{JSON.stringify(resp, null, 2)}</pre>}</div>
+
+      <br />
+      <br />
+      <br />
+
+      <button onClick={handleRefresh}>Refresh</button>
       <div>{resp && <pre>{JSON.stringify(resp, null, 2)}</pre>}</div>
 
       <br />
