@@ -108,7 +108,9 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
 
            PublicKeyCredentialCreationOptions requestOptions =  getPkcFromCache(username);
 
-           //System.out.println(credential);
+           System.out.println(credential);
+           System.out.println(username);
+           System.out.println(requestOptions);
 
            if (requestOptions != null){
                PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> pkc = PublicKeyCredential.parseRegistrationResponseJson(credential);
@@ -117,15 +119,7 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
                        .response(pkc)
                        .build();
 
-               //System.out.println(options);
-               System.out.println("*****************************");
-               System.out.println(requestOptions);
-               System.out.println("*****************************");
-               System.out.println(pkc);
-               System.out.println("*****************************");
-               System.out.println(pkc.getId().getBase64());
-               System.out.println("*****************************");
-               System.out.println(pkc.getId().getBase64Url());
+
 
                RegistrationResult result = relyingParty.finishRegistration(options);
                Authenticator savedAuth = new Authenticator(result, pkc.getResponse(), authUser, username);
@@ -147,41 +141,7 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
     }
 
 
-//    @Override
-//    public boolean finishRegisterAuthUser(String username, String credential) {
-//        try{
-//            AuthUser authUser = authUserRepo.findById(username).orElseThrow(
-//                    ()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-//
-//            PublicKeyCredentialCreationOptions requestOptions =  getPkcFromCache(username);
-//
-//            if (requestOptions != null){
-//                PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> pkc = PublicKeyCredential.parseRegistrationResponseJson(credential);
-//                FinishRegistrationOptions options = FinishRegistrationOptions.builder()
-//                        .request(requestOptions)
-//                        .response(pkc)
-//                        .build();
-//
-//                RegistrationResult result = relyingParty.finishRegistration(options);
-//                Authenticator savedAuth = new Authenticator(result, pkc.getResponse(), authUser, username);
-//                authenticatorRepository.save(savedAuth);
-//                AuthSupport authSupport = new AuthSupport();
-//                authSupport.setUserName(username);
-//                authSupport.setCredId(result.getKeyId().getId().getBase64Url());
-//                authSupportRepository.save(authSupport);
-//                return true;
-//
-//            }
-////            else {
-////                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Cached request expired. Try to register again");
-////            }
-//        }
-//        catch (Exception e) {
-//            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Registration Failed HA HA.", e);
-//        }
-//
-//        return true;
-//    }
+
 
     private PublicKeyCredentialCreationOptions getPkcFromCache(String username) {
         Object cachedValue = cacheManager.getCache("pkc").get(username).get();
@@ -248,17 +208,7 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
 
             if (request.getPublicKeyCredentialRequestOptions().getAllowCredentials().get().isEmpty()) return false;
 
-            System.out.println("*******************************************************");
-            System.out.println(request);
-            System.out.println(request.getPublicKeyCredentialRequestOptions().getChallenge());
-            System.out.println(request.getPublicKeyCredentialRequestOptions().getAllowCredentials().get().getFirst().getId().getBase64Url().toString());
-            System.out.println("user handler byteArray: "+user.getHandle());
-            System.out.println("*******************************************************");
-            System.out.println(pkc.getResponse().getClientData().getChallenge().getBase64Url().toString());
-            System.out.println(pkc.getId());
-            System.out.println(pkc.getResponse().getUserHandle());
 
-            System.out.println("*******************************************************");
 
             // server challange return to server is suppose to be same
             byte[] serverChallenge = request.getPublicKeyCredentialRequestOptions().getChallenge().getBytes();
