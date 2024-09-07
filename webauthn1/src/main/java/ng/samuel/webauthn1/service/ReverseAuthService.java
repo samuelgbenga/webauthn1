@@ -13,7 +13,6 @@ public interface ReverseAuthService {
 
     boolean finishLogin(String userName, String credential);
 
-    String refreshAuthUserDb();
 
 
 }

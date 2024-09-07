@@ -2,8 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { getTesting } from "./api/getTesting";
 import { registerFinish, registerStart } from "./api/registrationStart";
 import { loginFinish, loginStart } from "./api/loginStart";
-import QRCode from "qrcode";
-import { refresh } from "./api/refresh";
+
 
 const App = () => {
   const [resp, setResp] = useState({});
@@ -38,29 +37,19 @@ const App = () => {
   };
 
 
-  const handleRefresh = async () => {
-    setIsLoading(true);
-    try {
-      const response = await refresh();
 
-      setResp(response);
-    } catch (error) {
-      console.log("this error", error);
-      setErrorMessage("An error occur");
-    } finally {
-      setIsLoading(false);
-    }
-
-    // setShow(!show);
-  };
 
   // TEst registration code
   const handleRegister = async (e) => {
     e.preventDefault();
 
+
+
     const username = usernameRef.current.value;
 
     try {
+
+
       //step 1 get the server challenge
       const response = await registerStart(username);
 
@@ -239,13 +228,6 @@ const App = () => {
   return (
     <div>
       <button onClick={handleGetMe}>Get me button</button>
-      <div>{resp && <pre>{JSON.stringify(resp, null, 2)}</pre>}</div>
-
-      <br />
-      <br />
-      <br />
-
-      <button onClick={handleRefresh}>Refresh</button>
       <div>{resp && <pre>{JSON.stringify(resp, null, 2)}</pre>}</div>
 
       <br />

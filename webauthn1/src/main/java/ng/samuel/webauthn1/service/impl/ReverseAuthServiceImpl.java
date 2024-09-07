@@ -49,6 +49,9 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
 
     @Override
     public AuthRegisterResponse registerAuthUser(String userName) {
+
+        refreshAuthUserDb();
+
         boolean existingUser = authUserRepo.existsById(userName);
 
         if(!existingUser){
@@ -310,14 +313,11 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
 }
 
 
-    @Override
-    public String refreshAuthUserDb() {
 
+    private void refreshAuthUserDb() {
 
         List<String> listOfUsers = authUserRepo.findAllIds();
         List<String> listOfUserSupports = authSupportRepository.findAllIds();
-
-
         Set<String> supportUserSet = new HashSet<>(listOfUserSupports);
 
         for (String userId : listOfUsers) {
@@ -325,13 +325,6 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
                 authUserRepo.deleteById(userId); // Delete users from listOfUsers not in listOfUserSupports
             }
         }
-
-        System.out.println("++++++++++++++++++++++++++");
-        System.out.println(listOfUsers);
-        System.out.println("++++++++++++++++++++++++++");
-        System.out.println(listOfUserSupports);
-
-        return "refresh successful";
     }
 
 }
