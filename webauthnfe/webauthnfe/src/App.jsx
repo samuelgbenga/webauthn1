@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { getTesting } from "./api/getTesting";
 import { registerFinish, registerStart } from "./api/registrationStart";
 import { loginFinish, loginStart } from "./api/loginStart";
-
+import "./App.css"; // Import the CSS file
 
 const App = () => {
   const [resp, setResp] = useState({});
@@ -36,27 +36,19 @@ const App = () => {
     // setShow(!show);
   };
 
-
-
-
-  // TEst registration code
+  // // TEst registration code
   const handleRegister = async (e) => {
     e.preventDefault();
-
-
 
     const username = usernameRef.current.value;
 
     try {
-
-
       //step 1 get the server challenge
       const response = await registerStart(username);
 
       const data = await response;
 
       const publicKey = data.key; // This is the challenge data
-
 
       //step 2 send the challenge to the plateform Authenticator
       const credentialCreationOptions = {
@@ -86,12 +78,10 @@ const App = () => {
         attestation: "direct",
       };
 
-
       //step 3 get the challenge from the authenticator device second
       const credential = await navigator.credentials.create({
         publicKey: credentialCreationOptions,
       });
-
 
       // step 4 structure the credential in a acceptable
       //formate that would be sent to the server
@@ -112,24 +102,18 @@ const App = () => {
         type: credential.type,
       };
       //console.log(credentialResponse)
-      const jsonString = JSON.stringify(credentialResponse);
       //console.log(jsonString)
 
       // step 5 send the challenge or credential back to the server
-      const autResponse = await registerFinish(username, jsonString);
+      const autResponse = await registerFinish(username, credentialResponse);
 
-     console.log(autResponse);
+      console.log(autResponse);
       setMessage("Registration successful");
     } catch (error) {
       console.log("Registration failed:", error);
       setMessage("Registration failed");
     }
   };
-
-
-
-
-
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -173,7 +157,6 @@ const App = () => {
         publicKey: assertionOptions,
       });
 
-
       //data.handle = atob(data.handle.replace(/-/g, "+").replace(/_/g, "/"));
       let str = data.handle;
       let str1 = str.replace(/-/g, "+").replace(/_/g, "/").replace(/=+$/, "");
@@ -203,7 +186,6 @@ const App = () => {
         type: credential.type,
       };
 
-    
       // step 5 send the challenge or credential back to the server
       const result = await loginFinish(username, credentialResponse);
 
@@ -226,33 +208,36 @@ const App = () => {
   }, [resp]);
 
   return (
-    <div>
-      <button onClick={handleGetMe}>Get me button</button>
+    <div className="app-container">
+      <button onClick={handleGetMe}>
+        {isLoading ? "Loading..." : "Get me button"}
+      </button>
+
       <div>{resp && <pre>{JSON.stringify(resp, null, 2)}</pre>}</div>
 
-      <br />
-      <br />
-      <br />
+      {errorMessage && <div className="error-message">{errorMessage}</div>}
 
-      <div>
+      <div className="form-container">
+        <h2>Register</h2>
         <form onSubmit={handleRegister}>
-          <label>
-            <input type="text" ref={usernameRef} />
-          </label>
+          <input type="text" ref={usernameRef} placeholder="Enter username" />
           <button type="submit">Register Now</button>
         </form>
+        {message && (
+          <div
+            className={
+              message.includes("failed") ? "error-message" : "success-message"
+            }
+          >
+            {message}
+          </div>
+        )}
       </div>
 
-      <br />
-      <br />
-      <br />
-
-      <div>
-        <div>Login</div>
+      <div className="form-container">
+        <h2>Login</h2>
         <form onSubmit={handleLogin}>
-          <label>
-            <input type="text" ref={usernameRef1} />
-          </label>
+          <input type="text" ref={usernameRef1} placeholder="Enter username" />
           <button type="submit">Login</button>
         </form>
       </div>
@@ -261,3 +246,4 @@ const App = () => {
 };
 
 export default App;
+

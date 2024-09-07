@@ -1,0 +1,68 @@
+/* Container for the entire app */
+.app-container {
+    font-family: Arial, sans-serif;
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Buttons */
+  button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  
+  button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Input fields */
+  input {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Form container */
+  .form-container {
+    margin-top: 30px;
+  }
+  
+  /* Headings */
+  h2 {
+    color: #333;
+  }
+  
+  /* Preformatted JSON display */
+  pre {
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    overflow-x: auto;
+  }
+  
+  /* Error messages */
+  .error-message {
+    color: red;
+    margin-top: 10px;
+  }
+  
+  /* Success message */
+  .success-message {
+    color: green;
+    margin-top: 10px;
+  }
+  
