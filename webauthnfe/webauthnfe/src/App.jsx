@@ -210,7 +210,7 @@ const App = () => {
   return (
     <div className="app-container">
       <button onClick={handleGetMe}>
-        {isLoading ? "Loading..." : "Get me button"}
+        {isLoading ? "Loading..." : "Get me Testing samii"}
       </button>
 
       <div>{resp && <pre>{JSON.stringify(resp, null, 2)}</pre>}</div>
