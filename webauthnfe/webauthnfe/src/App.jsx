@@ -60,7 +60,7 @@ const App = () => {
         ),
         rp: {
           name: "webauthn1",
-          id: "webauthn-demo-4mpz.onrender.com",
+          id: "webauthn1.onrender.com",
         },
         user: {
           id: Uint8Array.from(username, (c) => c.charCodeAt(0)),
