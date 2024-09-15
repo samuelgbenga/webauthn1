@@ -6,7 +6,7 @@ import "./App.css"; // Import the CSS file
 
 const App = () => {
   const [resp, setResp] = useState({});
-  const [show, setShow] = useState(false);
+  //const [show, setShow] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState();
   const usernameRef = useRef();
@@ -60,7 +60,7 @@ const App = () => {
         ),
         rp: {
           name: "webauthn1",
-          id: "localhost",
+          id: "webauthn-demo-4mpz.onrender.com",
         },
         user: {
           id: Uint8Array.from(username, (c) => c.charCodeAt(0)),
