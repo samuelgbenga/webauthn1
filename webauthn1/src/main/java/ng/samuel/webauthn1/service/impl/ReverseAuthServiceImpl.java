@@ -9,6 +9,7 @@ import com.yubico.webauthn.*;
 import com.yubico.webauthn.data.*;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import ng.samuel.webauthn1.entity.AuthSupport;
 import ng.samuel.webauthn1.entity.AuthUser;
@@ -108,9 +109,9 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
 
            PublicKeyCredentialCreationOptions requestOptions =  getPkcFromCache(username);
 
-           System.out.println(credential);
-           System.out.println(username);
-           System.out.println(requestOptions);
+//           System.out.println(credential);
+//           System.out.println(username);
+//           System.out.println(requestOptions);
 
            if (requestOptions != null){
                PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> pkc = PublicKeyCredential.parseRegistrationResponseJson(credential);
@@ -194,6 +195,7 @@ public class ReverseAuthServiceImpl implements ReverseAuthService {
     // gets the two information one from the server(request) and the other from the authenticator(response)
     // and does the comparison using finishAssertion method (which did work so i had to do it manually)
     @Override
+    @Transactional
     public boolean finishLogin(String userName, String credential) {
         try{
 

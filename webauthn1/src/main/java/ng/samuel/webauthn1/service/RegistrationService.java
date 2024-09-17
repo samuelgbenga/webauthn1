@@ -4,6 +4,7 @@ import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.RegisteredCredential;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import jakarta.transaction.Transactional;
 import ng.samuel.webauthn1.entity.AuthSupport;
 import ng.samuel.webauthn1.entity.AuthUser;
 import ng.samuel.webauthn1.entity.Authenticator;
@@ -32,7 +33,7 @@ public class RegistrationService implements CredentialRepository {
     private AuthenticatorRepository authenticatorRepository;
 
 
-
+    @Transactional
     @Override
     public Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username) {
         AuthUser user = authUserRepo.findByUserName(username);
@@ -42,6 +43,7 @@ public class RegistrationService implements CredentialRepository {
                         .id(credential.getCredentialId()).build()).collect(Collectors.toSet());
     }
 
+    @Transactional
     @Override
     public Optional<ByteArray> getUserHandleForUsername(String username) {
         AuthUser user = authUserRepo.findByUserName(username);
@@ -49,6 +51,7 @@ public class RegistrationService implements CredentialRepository {
         return Optional.of(user.getHandle());
     }
 
+    @Transactional
     @Override
     public Optional<String> getUsernameForUserHandle(ByteArray userHandle) {
        AuthUser user = authUserRepo.findByHandle(userHandle);
@@ -56,6 +59,7 @@ public class RegistrationService implements CredentialRepository {
         return Optional.of(user.getUserName());
     }
 
+    @Transactional
     @Override
     public Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle) {
         AuthSupport authSupport = authSupportRepository.findByCredId(credentialId.getBase64Url());
@@ -83,6 +87,7 @@ public class RegistrationService implements CredentialRepository {
         }
     }
 
+    @Transactional
     @Override
     public Set<RegisteredCredential> lookupAll(ByteArray credentialId) {
         List<Authenticator> auth = authenticatorRepository.findAllByCredentialId(credentialId);
