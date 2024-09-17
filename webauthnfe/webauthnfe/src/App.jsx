@@ -60,7 +60,8 @@ const App = () => {
         ),
         rp: {
           name: "webauthn1",
-          id: "webauthn1.onrender.com",
+          // id: "webauthn1.onrender.com",
+          id: import.meta.env.VITE_RPID,
         },
         user: {
           id: Uint8Array.from(username, (c) => c.charCodeAt(0)),
