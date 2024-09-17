@@ -1,0 +1,23 @@
+name: Deploy React App to Render
+
+# Trigger the workflow on push events to the main branch
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the repository code
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Trigger redeployment on Render using Deploy Hook
+    - name: Trigger Redeployment on Render
+      run: |
+        curl -X POST "$RENDER_DEPLOY_HOOK_URL"
+      env:
+        RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
